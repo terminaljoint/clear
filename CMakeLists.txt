@@ -25,3 +25,8 @@ add_executable(clear_interpreter
         interpreter/parser.cpp
         interpreter/executer.cpp
 )
+
+# Place the interpreter where the editor expects it, relative to the project root.
+set_target_properties(clear_interpreter PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/interpreter"
+)
