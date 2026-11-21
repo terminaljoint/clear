@@ -7,6 +7,7 @@
 #include <cctype>
 #include <sstream>
 #include <cmath>
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -98,15 +99,22 @@ static bool saveFile() {
 }
 static vector<string> runCmd(const string& cmd) {
     vector<string> result;
-    FILE* p=popen(cmd.c_str(),"r");
-    if(!p) return {"Could not start interpreter"};
-    char buf[512];
+    FILE* p=popen((cmd+" 2>&1").c_str(),"r");
+    if(!p) return {"CLEAR IDE: Could not start interpreter process."};
+    char buf[4096];
     while(fgets(buf,sizeof(buf),p)) {
         string s(buf);
         if(!s.empty() && s.back()=='\n') s.pop_back();
+        if(!s.empty() && s.back()=='\r') s.pop_back();
         result.push_back(s);
     }
-    pclose(p);
+    int status=pclose(p);
+    if(status==-1) result.push_back("CLEAR IDE: Failed to read interpreter exit status.");
+    else if(WIFEXITED(status) && WEXITSTATUS(status)!=0)
+        result.push_back("CLEAR IDE: Interpreter exited with code "+to_string(WEXITSTATUS(status))+".");
+    else if(WIFSIGNALED(status))
+        result.push_back("CLEAR IDE: Interpreter terminated by signal "+to_string(WTERMSIG(status))+".");
+    if(result.empty()) result.push_back("(No output)");
     return result;
 }
 static vector<string> validateBlocks() {
