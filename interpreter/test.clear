@@ -1,2 +1,6 @@
-x=5
-print x
+name = "CLEAR"
+greeting = "Hello, " + name
+print greeting
+number = 5
+print number + 3
+print "Total: " + (4 + 6)
