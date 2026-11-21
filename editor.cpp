@@ -133,9 +133,10 @@ static vector<string> validateBlocks() {
     return e;
 }
 static void runCode() {
-    errors=validateBlocks();
+    // Let the interpreter be the single source of truth for syntax and runtime errors.
+    // Its stdout/stderr are captured by runCmd() and displayed directly in the IDE Output panel.
+    errors.clear();
     output.clear(); outputFirstRow=0; outputFocused=false; outputSelecting=false;
-    if(!errors.empty()) return;
     if(!saveFile()) return;
     output=runCmd("./interpreter/clear_interpreter temp.clear");
 }
