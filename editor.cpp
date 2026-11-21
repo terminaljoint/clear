@@ -201,7 +201,9 @@ int main() {
     const sf::Color bg(18,21,27), panel(25,29,37), toolbar(31,36,45), muted(120,132,148);
     while(win.isOpen()) {
         float W=(float)win.getSize().x, H=(float)win.getSize().y;
-        const auto& outLines=visibleOutput();\n        int outRows=min(9,max(4,(int)outLines.size()));\n        float outputH=outputVisible?min(H*0.40f,max(130.f,44.f+outRows*22.f)):0.f;
+        const auto& outLines=visibleOutput();
+        int outRows=min(9,max(4,(int)outLines.size()));
+        float outputH=outputVisible?min(H*0.40f,max(130.f,44.f+outRows*22.f)):0.f;
         float editorTop=76.f, editorBottom=H-outputH-12.f;
         if(editorBottom<editorTop+80) editorBottom=editorTop+80;
         float outputTop=H-outputH;
@@ -214,7 +216,11 @@ int main() {
             if(ev.type==sf::Event::Resized) {
                 win.setView(sf::View(sf::FloatRect(0,0,ev.size.width,ev.size.height)));
             }
-            if(ev.type==sf::Event::MouseWheelScrolled) {\n                float mx=ev.mouseWheelScroll.x,my=ev.mouseWheelScroll.y;\n                if(outputVisible && my>=outputTop) { const auto& ls=visibleOutput(); int visibleRows=max(1,(int)((outputH-40)/22)); outputFirstRow=max(0,min(max(0,(int)ls.size()-visibleRows),outputFirstRow-(int)ev.mouseWheelScroll.delta)); }\n                else if(mx<gutter+8 || my<editorBottom) firstRow=max(0,firstRow-(int)ev.mouseWheelScroll.delta);\n            }
+            if(ev.type==sf::Event::MouseWheelScrolled) {
+                float mx=ev.mouseWheelScroll.x,my=ev.mouseWheelScroll.y;
+                if(outputVisible && my>=outputTop) { const auto& ls=visibleOutput(); int visibleRows=max(1,(int)((outputH-40)/22)); outputFirstRow=max(0,min(max(0,(int)ls.size()-visibleRows),outputFirstRow-(int)ev.mouseWheelScroll.delta)); }
+                else if(mx<gutter+8 || my<editorBottom) firstRow=max(0,firstRow-(int)ev.mouseWheelScroll.delta);
+            }
             if(ev.type==sf::Event::MouseButtonPressed && ev.mouseButton.button==sf::Mouse::Left) {
                 float mx=ev.mouseButton.x,my=ev.mouseButton.y;
                 if(runBtn.hit(mx,my)) { runCode(); continue; }
@@ -222,7 +228,10 @@ int main() {
                 if(outputBtn.hit(mx,my)) { outputVisible=!outputVisible; outputFocused=false; outputSelecting=false; continue; }
                 if(outputVisible && my>=outputTop+30 && my<outputTop+outputH) { const auto& lines=visibleOutput(); if(!lines.empty()){ int visibleRows=max(1,(int)((outputH-40)/22)); int row=max(0,min(visibleRows-1,(int)((my-outputTop-36)/22.f)))+outputFirstRow; row=min(row,(int)lines.size()-1); outputCursor={row,outputColAtX(font,lines[row],mx-18)}; outputAnchor=outputCursor; outputSelecting=true; outputFocused=true; } continue; }
                 if(my>=editorTop && my<editorBottom && mx>=gutter) { outputFocused=false; outputSelecting=false;
-                    int row=firstRow+(int)((my-editorTop)/lineHeight);\n                    row=max(0,min(row,(int)code.size()-1));\n                    float textX=mx-gutter-12;\n                    cy=row; cx=max(indentOf(row),colAtX(font,code[row],textX));
+                    int row=firstRow+(int)((my-editorTop)/lineHeight);
+                    row=max(0,min(row,(int)code.size()-1));
+                    float textX=mx-gutter-12;
+                    cy=row; cx=max(indentOf(row),colAtX(font,code[row],textX));
                     clearSel();
                 }
             }
@@ -238,21 +247,28 @@ int main() {
                 if(ctrl && ev.key.code==sf::Keyboard::X) { if(hasSel()) { sf::Clipboard::setString(getSelText()); eraseSel(); } continue; }
                 if(ctrl && ev.key.code==sf::Keyboard::V) { insert(sf::Clipboard::getString()); continue; }
                 int oldX=cx,oldY=cy;
-                if(ev.key.code==sf::Keyboard::Left) { if(cx>indentOf(cy)) cx--; }\n                else if(ev.key.code==sf::Keyboard::Right) { if(cx<(int)code[cy].size()) cx++; else if(cy+1<(int)code.size()){cy++;cx=indentOf(cy);} }\n                else if(ev.key.code==sf::Keyboard::Up) { if(cy>0) cy--; cx=max(indentOf(cy),min(cx,(int)code[cy].size())); }\n                else if(ev.key.code==sf::Keyboard::Down) { if(cy+1<(int)code.size()) cy++; cx=max(indentOf(cy),min(cx,(int)code[cy].size())); }\n                else if(ev.key.code==sf::Keyboard::Home) cx=indentOf(cy);
+                if(ev.key.code==sf::Keyboard::Left) { if(cx>indentOf(cy)) cx--; }
+                else if(ev.key.code==sf::Keyboard::Right) { if(cx<(int)code[cy].size()) cx++; else if(cy+1<(int)code.size()){cy++;cx=indentOf(cy);} }
+                else if(ev.key.code==sf::Keyboard::Up) { if(cy>0) cy--; cx=max(indentOf(cy),min(cx,(int)code[cy].size())); }
+                else if(ev.key.code==sf::Keyboard::Down) { if(cy+1<(int)code.size()) cy++; cx=max(indentOf(cy),min(cx,(int)code[cy].size())); }
+                else if(ev.key.code==sf::Keyboard::Home) cx=indentOf(cy);
                 else if(ev.key.code==sf::Keyboard::End) cx=(int)code[cy].size();
                 else if(ev.key.code==sf::Keyboard::BackSpace) { if(hasSel()) eraseSel(); else if(cx>indentOf(cy)){code[cy].erase(cx-1,1);cx--;dirty=true;} }
                 else if(ev.key.code==sf::Keyboard::Delete) { if(hasSel()) eraseSel(); else if(cx<(int)code[cy].size()){code[cy].erase(cx,1);dirty=true;} else if(cy+1<(int)code.size()){code[cy]+=code[cy+1];code.erase(code.begin()+cy+1);dirty=true;} }
                 else if(ev.key.code==sf::Keyboard::Tab) insert("    ");
                 else if(ev.key.code==sf::Keyboard::Enter) {
                     string left=code[cy].substr(0,cx),right=code[cy].substr(cx);
-                    int indent=0; while(indent<(int)left.size() && left[indent]==' ') indent++;\n                    if(!left.empty() && left.back()==':') indent+=4;\n                    else if(!left.empty() && left.back()=='#') indent=max(0,indent-4);
+                    int indent=0; while(indent<(int)left.size() && left[indent]==' ') indent++;
+                    if(!left.empty() && left.back()==':') indent+=4;
+                    else if(!left.empty() && left.back()=='#') indent=max(0,indent-4);
                     code[cy]=left; code.insert(code.begin()+cy+1,string(indent,' ')+right);
                     cy++; cx=indent; clearSel(); dirty=true;
                 }
                 bool moved=(ev.key.code==sf::Keyboard::Left||ev.key.code==sf::Keyboard::Right||ev.key.code==sf::Keyboard::Up||ev.key.code==sf::Keyboard::Down||ev.key.code==sf::Keyboard::Home||ev.key.code==sf::Keyboard::End);
                 if(shift && moved) { if(!selecting) {anchor={oldY,oldX};selecting=true;} }
                 else if(moved) clearSel();
-                clampCursor();\n                if(cy<firstRow) firstRow=cy;
+                clampCursor();
+                if(cy<firstRow) firstRow=cy;
                 int visible=max(1,(int)((editorBottom-editorTop)/lineHeight));
                 if(cy>=firstRow+visible) firstRow=cy-visible+1;
             }
