@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cctype>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
 
@@ -230,7 +231,7 @@ int main() {
             }
             if(ev.type==sf::Event::MouseButtonPressed && ev.mouseButton.button==sf::Mouse::Left) {
                 float mx=ev.mouseButton.x,my=ev.mouseButton.y;
-                if(outputVisible && abs(my-outputTop)<=7.f){resizingOutput=true;continue;}
+                if(outputVisible && fabs(my-outputTop)<=7.f){resizingOutput=true;continue;}
                 if(runBtn.hit(mx,my)) { runCode(); continue; }
                 if(saveBtn.hit(mx,my)) { if(saveFile()) errors.clear(); continue; }
                 if(outputBtn.hit(mx,my)) { outputVisible=!outputVisible; outputFocused=false; outputSelecting=false; continue; }
