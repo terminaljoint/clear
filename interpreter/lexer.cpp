@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <string>
 #include <cctype>
@@ -7,6 +6,8 @@ using namespace std;
 vector<string> lex(const string& code) {
     vector<string> tokens;
     string current;
+    bool inString = false;
+    bool escaped = false;
 
     auto flush = [&]() {
         if (!current.empty()) {
@@ -18,7 +19,25 @@ vector<string> lex(const string& code) {
     for (size_t i = 0; i < code.size(); i++) {
         char c = code[i];
 
-        if (c == '\n') {
+        if (inString) {
+            current += c;
+            if (escaped) {
+                escaped = false;
+            } else if (c == '\\') {
+                escaped = true;
+            } else if (c == '"') {
+                inString = false;
+                flush();
+            }
+            continue;
+        }
+
+        if (c == '"') {
+            flush();
+            current += c;
+            inString = true;
+        }
+        else if (c == '\n') {
             flush();
             tokens.push_back("\n");
         }
@@ -34,7 +53,7 @@ vector<string> lex(const string& code) {
                  c == '(' || c == ')') {
             flush();
             tokens.push_back(string(1, c));
-                 }
+        }
         else {
             current += c;
         }
