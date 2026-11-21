@@ -218,7 +218,7 @@ int main() {
                 if(runBtn.hit(mx,my)) { runCode(); continue; }
                 if(saveBtn.hit(mx,my)) { if(saveFile()) errors.clear(); continue; }
                 if(outputBtn.hit(mx,my)) { outputVisible=!outputVisible; outputFocused=false; outputSelecting=false; continue; }
-                if(outputVisible && my>=outputTop+30 && my<outputTop+outputH) { const auto& lines=visibleOutput(); if(!lines.empty()){ int row=max(0,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f))); outputCursor={row,outputColAtX(font,lines[row],mx-18)}; outputAnchor=outputCursor; outputSelecting=true; outputFocused=true; } continue; }
+                if(outputVisible && my>=outputTop+30 && my<outputTop+outputH) { const auto& lines=visibleOutput(); if(!lines.empty()){ int row=max(0,min(4,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f)))); outputCursor={row,outputColAtX(font,lines[row],mx-18)}; outputAnchor=outputCursor; outputSelecting=true; outputFocused=true; } continue; }
                 if(my>=editorTop && my<editorBottom && mx>=gutter) { outputFocused=false; outputSelecting=false;
                     int row=firstRow+(int)((my-editorTop)/lineHeight);
                     row=max(0,min(row,(int)code.size()-1));
