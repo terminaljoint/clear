@@ -58,7 +58,7 @@ static void eraseSel() {
         code.erase(code.begin()+a.row+1,code.begin()+b.row+1);
         code[a.row]=merged;
     }
-    cy=a.row; cx=a.col; clearSel(); dirty=true;
+    cy=a.row; cx=a.col; clampCursor(); clearSel(); dirty=true;
 }
 static void insert(const string& s) {
     eraseSel();
@@ -117,7 +117,7 @@ static vector<string> validateBlocks() {
 }
 static void runCode() {
     errors=validateBlocks();
-    output.clear();
+    output.clear(); outputFirstRow=0; outputFocused=false; outputSelecting=false;
     if(!errors.empty()) return;
     if(!saveFile()) return;
     output=runCmd("./interpreter/clear_interpreter temp.clear");
