@@ -48,9 +48,17 @@ vector<string> lex(const string& code) {
             flush();
             tokens.push_back(";");
         }
-        else if (c == '=' || c == '+' || c == '-' ||
-                 c == '*' || c == '/' || c == '%' ||
-                 c == '(' || c == ')') {
+        else if (c == '>' || c == '<' || c == '=' || c == '!') {
+            flush();
+            string op(1, c);
+            if (i + 1 < code.size() && code[i + 1] == '=') {
+                op += '=';
+                i++;
+            }
+            tokens.push_back(op);
+        }
+        else if (c == '+' || c == '-' || c == '*' || c == '/' ||
+                 c == '%' || c == '(' || c == ')') {
             flush();
             tokens.push_back(string(1, c));
         }
