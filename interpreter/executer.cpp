@@ -55,6 +55,43 @@ public:
 
 private:
     Value expr() {
+        Value left = arithmetic();
+
+        while (pos < tokens.size()) {
+            string op = tokens[pos];
+            if (op != ">" && op != "<" && op != ">=" && op != "<=" &&
+                op != "==" && op != "!=")
+                break;
+
+            pos++;
+            Value right = arithmetic();
+            bool result = false;
+
+            if (left.isString != right.isString)
+                throw runtime_error("Cannot compare a string with a number");
+
+            if (left.isString) {
+                if (op == "==") result = left.text == right.text;
+                else if (op == "!=") result = left.text != right.text;
+                else if (op == ">") result = left.text > right.text;
+                else if (op == "<") result = left.text < right.text;
+                else if (op == ">=") result = left.text >= right.text;
+                else if (op == "<=") result = left.text <= right.text;
+            } else {
+                if (op == "==") result = left.number == right.number;
+                else if (op == "!=") result = left.number != right.number;
+                else if (op == ">") result = left.number > right.number;
+                else if (op == "<") result = left.number < right.number;
+                else if (op == ">=") result = left.number >= right.number;
+                else if (op == "<=") result = left.number <= right.number;
+            }
+
+            left = Value(result ? 1 : 0);
+        }
+        return left;
+    }
+
+    Value arithmetic() {
         Value value = term();
 
         while (pos < tokens.size()) {
