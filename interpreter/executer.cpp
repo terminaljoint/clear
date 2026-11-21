@@ -55,6 +55,20 @@ public:
 
 private:
     Value expr() {
+        Value condition = comparison();
+        if (pos >= tokens.size() || tokens[pos] != "?") return condition;
+        pos++;
+        Value whenTrue = expr();
+        if (pos >= tokens.size() || tokens[pos] != "??")
+            throw runtime_error("Ternary requires '??' between its two results");
+        pos++;
+        Value whenFalse = expr();
+        bool truthy = condition.isString ? !condition.text.empty() : condition.number != 0;
+        return truthy ? whenTrue : whenFalse;
+    }
+
+    Value comparison() {
+
         Value left = arithmetic();
 
         while (pos < tokens.size()) {
