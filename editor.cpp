@@ -15,6 +15,8 @@ static int cx = 0, cy = 0, firstRow = 0;
 static bool selecting = false, dirty = false, outputVisible = true;
 static Pos anchor{0,0};
 static vector<string> output, errors;
+static bool outputFocused=false, outputSelecting=false;
+static Pos outputAnchor{0,0}, outputCursor{0,0};
 static const vector<string> keywords = {"print","loop","if","elif","else","input","return"};
 static const int fontSize = 17, lineHeight = 24, gutter = 58;
 
@@ -30,6 +32,12 @@ static Pos endSel() {
 }
 static bool hasSel() { return selecting && (anchor.row!=cy || anchor.col!=cx); }
 static void clearSel() { selecting=false; anchor={cy,cx}; }
+static const vector<string>& visibleOutput() { return errors.empty()?output:errors; }
+static Pos outputStartSel() { Pos a=outputAnchor,b=outputCursor; if(a.row>b.row||(a.row==b.row&&a.col>b.col)) swap(a,b); return a; }
+static Pos outputEndSel() { Pos a=outputAnchor,b=outputCursor; if(a.row>b.row||(a.row==b.row&&a.col>b.col)) swap(a,b); return b; }
+static bool hasOutputSel() { return outputSelecting&&(outputAnchor.row!=outputCursor.row||outputAnchor.col!=outputCursor.col); }
+static string outputSelectionText() { if(!hasOutputSel()) return ""; const auto& lines=visibleOutput(); Pos a=outputStartSel(),b=outputEndSel(); if(lines.empty()) return ""; a.row=max(0,min(a.row,(int)lines.size()-1)); b.row=max(0,min(b.row,(int)lines.size()-1)); if(a.row==b.row) return lines[a.row].substr(a.col,max(0,b.col-a.col)); string s=lines[a.row].substr(a.col)+"\n"; for(int r=a.row+1;r<b.row;r++) s+=lines[r]+"\n"; s+=lines[b.row].substr(0,b.col); return s; }
+static int outputColAtX(const sf::Font& font,const string& s,float target) { float w=0; int c=0; while(c<(int)s.size()&&w<target) { float adv=font.getGlyph((unsigned char)s[c],15,false).advance; if(w+adv/2>=target) break; w+=adv;c++; } return c; }
 static string getSelText() {
     if(!hasSel()) return "";
     Pos a=startSel(), b=endSel();
@@ -209,8 +217,9 @@ int main() {
                 float mx=ev.mouseButton.x,my=ev.mouseButton.y;
                 if(runBtn.hit(mx,my)) { runCode(); continue; }
                 if(saveBtn.hit(mx,my)) { if(saveFile()) errors.clear(); continue; }
-                if(outputBtn.hit(mx,my)) { outputVisible=!outputVisible; continue; }
-                if(my>=editorTop && my<editorBottom && mx>=gutter) {
+                if(outputBtn.hit(mx,my)) { outputVisible=!outputVisible; outputFocused=false; outputSelecting=false; continue; }
+                if(outputVisible && my>=outputTop+30 && my<outputTop+outputH) { const auto& lines=visibleOutput(); if(!lines.empty()){ int row=max(0,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f))); outputCursor={row,outputColAtX(font,lines[row],mx-18)}; outputAnchor=outputCursor; outputSelecting=true; outputFocused=true; } continue; }
+                if(my>=editorTop && my<editorBottom && mx>=gutter) { outputFocused=false; outputSelecting=false;
                     int row=firstRow+(int)((my-editorTop)/lineHeight);
                     row=max(0,min(row,(int)code.size()-1));
                     float textX=mx-gutter-12;
@@ -218,13 +227,15 @@ int main() {
                     clearSel();
                 }
             }
+            if(ev.type==sf::Event::MouseMoved && outputSelecting && sf::Mouse::isButtonPressed(sf::Mouse::Left) && outputVisible) { float mx=ev.mouseMove.x,my=ev.mouseMove.y; const auto& lines=visibleOutput(); if(!lines.empty()&&my>=outputTop+30&&my<outputTop+outputH){int row=max(0,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f)));outputCursor={row,outputColAtX(font,lines[row],mx-18)};} }
             if(ev.type==sf::Event::KeyPressed) {
                 bool ctrl=ev.key.control, shift=ev.key.shift;
                 if(ctrl && ev.key.code==sf::Keyboard::S) { if(saveFile()) errors.clear(); continue; }
                 if(ev.key.code==sf::Keyboard::F4) { outputVisible=!outputVisible; continue; }
                 if(ev.key.code==sf::Keyboard::F5) { runCode(); continue; }
-                if(ctrl && ev.key.code==sf::Keyboard::A) { anchor={0,0}; cy=(int)code.size()-1; cx=(int)code.back().size(); selecting=true; continue; }
-                if(ctrl && ev.key.code==sf::Keyboard::C) { if(hasSel()) sf::Clipboard::setString(getSelText()); continue; }
+                if(ctrl && ev.key.code==sf::Keyboard::A) { if(outputFocused){const auto& lines=visibleOutput();if(!lines.empty()){int last=min(4,(int)lines.size()-1);outputAnchor={0,0};outputCursor={last,(int)lines[last].size()};outputSelecting=true;} } else { anchor={0,0}; cy=(int)code.size()-1; cx=(int)code.back().size(); selecting=true; } continue; }
+                if(ctrl && ev.key.code==sf::Keyboard::C) { if(outputFocused&&hasOutputSel()) sf::Clipboard::setString(outputSelectionText()); else if(hasSel()) sf::Clipboard::setString(getSelText()); continue; }
+                if(outputFocused) continue;
                 if(ctrl && ev.key.code==sf::Keyboard::X) { if(hasSel()) { sf::Clipboard::setString(getSelText()); eraseSel(); } continue; }
                 if(ctrl && ev.key.code==sf::Keyboard::V) { insert(sf::Clipboard::getString()); continue; }
                 int oldX=cx,oldY=cy;
@@ -296,8 +307,7 @@ int main() {
             sf::RectangleShape divider({W,1}); divider.setPosition(0,outputTop); divider.setFillColor(sf::Color(65,75,88)); win.draw(divider);
             drawText(win,font,"OUTPUT",18,outputTop+12,sf::Color(135,150,170),13);
             drawText(win,font,errors.empty()?"":"ERRORS",95,outputTop+12,sf::Color(220,105,105),13);
-            for(int i=0;i<(int)output.size() && i<5;i++) drawText(win,font,output[i],18,outputTop+36+i*22,sf::Color(145,220,155),15);
-            for(int i=0;i<(int)errors.size() && i<5;i++) drawText(win,font,errors[i],18,outputTop+36+i*22,sf::Color(235,115,115),15);
+            const auto& lines=visibleOutput(); for(int i=0;i<(int)lines.size()&&i<5;i++){ float y=outputTop+36+i*22; if(hasOutputSel()){Pos a=outputStartSel(),b=outputEndSel();if(i>=a.row&&i<=b.row){int st=i==a.row?a.col:0,en=i==b.row?b.col:(int)lines[i].size();float x=18+textWidth(font,lines[i].substr(0,st));float ww=textWidth(font,lines[i].substr(st,max(0,en-st)));if(i!=b.row)ww+=5;sf::RectangleShape hl({max(ww,3.f),19});hl.setPosition(x,y-1);hl.setFillColor(sf::Color(55,85,120,180));win.draw(hl);}} drawText(win,font,lines[i],18,y,errors.empty()?sf::Color(145,220,155):sf::Color(235,115,115),15); }
         }
         // Status bar
         sf::RectangleShape status({W,24}); status.setPosition(0,H-24); status.setFillColor(sf::Color(34,40,49)); win.draw(status);
