@@ -227,7 +227,7 @@ int main() {
                     clearSel();
                 }
             }
-            if(ev.type==sf::Event::MouseMoved && outputSelecting && sf::Mouse::isButtonPressed(sf::Mouse::Left) && outputVisible) { float mx=ev.mouseMove.x,my=ev.mouseMove.y; const auto& lines=visibleOutput(); if(!lines.empty()&&my>=outputTop+30&&my<outputTop+outputH){int row=max(0,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f)));outputCursor={row,outputColAtX(font,lines[row],mx-18)};} }
+            if(ev.type==sf::Event::MouseMoved && outputSelecting && sf::Mouse::isButtonPressed(sf::Mouse::Left) && outputVisible) { float mx=ev.mouseMove.x,my=ev.mouseMove.y; const auto& lines=visibleOutput(); if(!lines.empty()&&my>=outputTop+30&&my<outputTop+outputH){int row=max(0,min(4,min((int)lines.size()-1,(int)((my-outputTop-36)/22.f))));outputCursor={row,outputColAtX(font,lines[row],mx-18)};} }
             if(ev.type==sf::Event::KeyPressed) {
                 bool ctrl=ev.key.control, shift=ev.key.shift;
                 if(ctrl && ev.key.code==sf::Keyboard::S) { if(saveFile()) errors.clear(); continue; }
