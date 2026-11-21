@@ -4,8 +4,8 @@
 #include <stdexcept>
 using namespace std;
 static vector<string> ts; static size_t p=0;
-static void skipSep(){while(p<ts.size()&&(ts[p]=="\\n"||ts[p]==";"))p++;}
-static vector<string> takeStatement(){vector<string>a;int par=0;while(p<ts.size()){string t=ts[p];if(par==0&&(t=="\\n"||t==";"||t=="#"))break;if(t=="(")par++;if(t==")")par--;a.push_back(t);p++;}return a;}
+static void skipSep(){while(p<ts.size()&&(ts[p]=="\n"||ts[p]==";"))p++;}
+static vector<string> takeStatement(){vector<string>a;int par=0;while(p<ts.size()){string t=ts[p];if(par==0&&(t=="\n"||t==";"||t=="#"))break;if(t=="(")par++;if(t==")")par--;a.push_back(t);p++;}return a;}
 static vector<string> takeHeadColon(){vector<string>a;int par=0;while(p<ts.size()){string t=ts[p];if(t==":"&&par==0){p++;break;}if(t=="(")par++;if(t==")")par--;a.push_back(t);p++;}return a;}
 static vector<ClearNode> block(bool stopBranches=false){
  vector<ClearNode>out;
