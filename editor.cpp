@@ -20,6 +20,7 @@ static int outputFirstRow=0;
 static bool outputFocused=false, outputSelecting=false, resizingOutput=false;
 static float outputHeightOverride=0;
 static vector<vector<string>> undoStack, redoStack;
+static void clearSel();
 static void recordUndo(){undoStack.push_back(code); if(undoStack.size()>100) undoStack.erase(undoStack.begin()); redoStack.clear();}
 static void undoEdit(){if(undoStack.empty())return;redoStack.push_back(code);code=undoStack.back();undoStack.pop_back();cy=max(0,min(cy,(int)code.size()-1));cx=max(0,min(cx,(int)code[cy].size()));clearSel();dirty=true;}
 static Pos outputAnchor{0,0}, outputCursor{0,0};
