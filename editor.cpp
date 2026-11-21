@@ -305,8 +305,7 @@ int main(){
 
                         t.close();
 
-                        outputLines = runInterpreter(
-    "/home/murugansanthosh/Win11BU/driveda-1/chromebook-linux/clear/interpreter/clear_interpreter /home/murugansanthosh/Win11BU/driveda-1/chromebook-linux/clear/cmake-build-debug/temp.clear");
+                        outputLines = runInterpreter("./interpreter/clear_interpreter temp.clear");
                     }
 
                     continue;
