@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <vector>
 #include <string>
@@ -9,9 +8,36 @@ using namespace std;
 
 extern vector<vector<string>> commands;
 
-map<string, int> vars;
+struct Value {
+    bool isString;
+    int number;
+    string text;
 
-// Expression evaluator
+    Value(int n = 0) : isString(false), number(n) {}
+    Value(const string& s) : isString(true), number(0), text(s) {}
+};
+
+map<string, Value> vars;
+
+static string valueToString(const Value& value) {
+    return value.isString ? value.text : to_string(value.number);
+}
+
+static string decodeString(const string& token) {
+    string result;
+    for (size_t i = 1; i + 1 < token.size(); i++) {
+        if (token[i] == '\\' && i + 2 < token.size()) {
+            char next = token[++i];
+            if (next == 'n') result += '\n';
+            else if (next == 't') result += '\t';
+            else result += next;
+        } else {
+            result += token[i];
+        }
+    }
+    return result;
+}
+
 class Expression {
     const vector<string>& tokens;
     size_t pos;
@@ -20,105 +46,112 @@ public:
     Expression(const vector<string>& t, size_t start)
         : tokens(t), pos(start) {}
 
-    int evaluate() {
-        int result = expr();
-
+    Value evaluate() {
+        Value result = expr();
         if (pos != tokens.size())
             throw runtime_error("Unexpected token: " + tokens[pos]);
-
         return result;
     }
 
 private:
-    int expr() {
-        int value = term();
+    Value expr() {
+        Value value = term();
 
         while (pos < tokens.size()) {
             if (tokens[pos] == "+") {
                 pos++;
-                value += term();
+                Value right = term();
+                if (value.isString || right.isString)
+                    value = Value(valueToString(value) + valueToString(right));
+                else
+                    value.number += right.number;
             }
             else if (tokens[pos] == "-") {
+                if (value.isString)
+                    throw runtime_error("Cannot subtract from a string");
                 pos++;
-                value -= term();
+                Value right = term();
+                if (right.isString)
+                    throw runtime_error("Cannot subtract a string");
+                value.number -= right.number;
             }
-            else {
-                break;
-            }
+            else break;
         }
-
         return value;
     }
 
-    int term() {
-        int value = factor();
+    Value term() {
+        Value value = factor();
 
         while (pos < tokens.size()) {
             if (tokens[pos] == "*") {
+                if (value.isString)
+                    throw runtime_error("Cannot multiply a string");
                 pos++;
-                value *= factor();
+                Value right = factor();
+                if (right.isString)
+                    throw runtime_error("Cannot multiply by a string");
+                value.number *= right.number;
             }
             else if (tokens[pos] == "/") {
+                if (value.isString)
+                    throw runtime_error("Cannot divide a string");
                 pos++;
-                int divisor = factor();
-
-                if (divisor == 0)
+                Value right = factor();
+                if (right.isString)
+                    throw runtime_error("Cannot divide by a string");
+                if (right.number == 0)
                     throw runtime_error("Division by zero");
-
-                value /= divisor;
+                value.number /= right.number;
             }
             else if (tokens[pos] == "%") {
+                if (value.isString)
+                    throw runtime_error("Cannot use modulo on a string");
                 pos++;
-                int divisor = factor();
-
-                if (divisor == 0)
+                Value right = factor();
+                if (right.isString)
+                    throw runtime_error("Cannot use modulo with a string");
+                if (right.number == 0)
                     throw runtime_error("Modulo by zero");
-
-                value %= divisor;
+                value.number %= right.number;
             }
-            else {
-                break;
-            }
+            else break;
         }
-
         return value;
     }
 
-    int factor() {
+    Value factor() {
         if (pos >= tokens.size())
             throw runtime_error("Expected a value");
 
         string token = tokens[pos++];
 
-        // Parentheses
         if (token == "(") {
-            int value = expr();
-
+            Value value = expr();
             if (pos >= tokens.size() || tokens[pos] != ")")
                 throw runtime_error("Missing closing parenthesis");
-
             pos++;
             return value;
         }
 
-        // Unary minus
-        if (token == "-")
-            return -factor();
+        if (token == "-") {
+            Value value = factor();
+            if (value.isString)
+                throw runtime_error("Cannot negate a string");
+            value.number = -value.number;
+            return value;
+        }
+        if (token == "+") return factor();
 
-        // Unary plus
-        if (token == "+")
-            return factor();
+        if (token.size() >= 2 && token.front() == '"' && token.back() == '"')
+            return Value(decodeString(token));
 
-        // Integer literal
         char* end = nullptr;
         long number = strtol(token.c_str(), &end, 10);
-
         if (end != token.c_str() && *end == '\0')
-            return static_cast<int>(number);
+            return Value(static_cast<int>(number));
 
-        // Variable
         auto it = vars.find(token);
-
         if (it != vars.end())
             return it->second;
 
@@ -131,31 +164,31 @@ void execute() {
 
     for (const auto& cmd : commands) {
         try {
-            if (cmd.empty())
-                continue;
+            if (cmd.empty()) continue;
 
             // Assignment: name = expression
             if (cmd.size() >= 3 && cmd[1] == "=") {
                 string name = cmd[0];
-
-                vector<string> expressionTokens(
-                    cmd.begin() + 2, cmd.end()
-                );
-
+                vector<string> expressionTokens(cmd.begin() + 2, cmd.end());
                 Expression expression(expressionTokens, 0);
                 vars[name] = expression.evaluate();
             }
-
             // Print: print expression
-            else if (cmd[0] == "print" && cmd.size() >= 2) {
-                vector<string> expressionTokens(
-                    cmd.begin() + 1, cmd.end()
-                );
-
-                Expression expression(expressionTokens, 0);
-                cout << expression.evaluate() << endl;
+            else if (cmd[0] == "print") {
+                if (cmd.size() == 1) {
+                    cout << endl;
+                } else {
+                    vector<string> expressionTokens(cmd.begin() + 1, cmd.end());
+                    Expression expression(expressionTokens, 0);
+                    cout << valueToString(expression.evaluate()) << endl;
+                }
             }
-
+            // Input: input variableName (stores the line as a string)
+            else if (cmd[0] == "input" && cmd.size() == 2) {
+                string inputText;
+                getline(cin, inputText);
+                vars[cmd[1]] = Value(inputText);
+            }
             else {
                 throw runtime_error("Invalid statement");
             }
