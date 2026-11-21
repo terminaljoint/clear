@@ -8,11 +8,11 @@ vector<string> lex(const string&code){
  auto flush=[&](){if(!cur.empty()){t.push_back(cur);cur.clear();}};
  for(size_t i=0;i<code.size();i++){
   char c=code[i];
-  if(comment){if(c=='\\''&&i+2<code.size()&&code[i+1]=='\\''&&code[i+2]=='\\''){comment=false;i+=2;continue;}if(c=='\\n')t.push_back("\\n");continue;}
-  if(inStr){cur+=c;if(escape)escape=false;else if(c=='\\\\')escape=true;else if(c=='"'){inStr=false;flush();}continue;}
-  if(c=='\\''&&i+2<code.size()&&code[i+1]=='\\''&&code[i+2]=='\\''){flush();comment=true;i+=2;continue;}
+  if(comment){if(c=='\''&&i+2<code.size()&&code[i+1]=='\''&&code[i+2]=='\''){comment=false;i+=2;continue;}if(c=='\n')t.push_back("\n");continue;}
+  if(inStr){cur+=c;if(escape)escape=false;else if(c=='\\')escape=true;else if(c=='"'){inStr=false;flush();}continue;}
+  if(c=='\''&&i+2<code.size()&&code[i+1]=='\''&&code[i+2]=='\''){flush();comment=true;i+=2;continue;}
   if(c=='"'){flush();cur+=c;inStr=true;continue;}
-  if(c=='\\n'){flush();t.push_back("\\n");continue;}
+  if(c=='\n'){flush();t.push_back("\n");continue;}
   if(isspace((unsigned char)c)){flush();continue;}
   if(c==';'||c==':'||c=='#'||c==','||c=='?'||c=='@'){
    flush();string s(1,c);
