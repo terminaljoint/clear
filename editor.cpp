@@ -174,7 +174,7 @@ struct Button {
         r.setFillColor(active?sf::Color(48,90,115):sf::Color(45,52,64));
         r.setOutlineThickness(1); r.setOutlineColor(sf::Color(70,82,98)); w.draw(r);
         sf::Text t(label,f,14); t.setFillColor(sf::Color(225,230,238));
-        auto b=t.getLocalBounds(); t.setPosition(bounds.left+(bounds.width-b.width)/2- b.left,bounds.top+(bounds.height-b.height)/2-b.top;
+        auto b=t.getLocalBounds(); t.setPosition(bounds.left+(bounds.width-b.width)/2- b.left,bounds.top+(bounds.height-b.height)/2-b.top);
         w.draw(t);
     }
 };
