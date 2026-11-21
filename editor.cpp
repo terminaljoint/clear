@@ -33,6 +33,8 @@ static Pos endSel() {
 }
 static bool hasSel() { return selecting && (anchor.row!=cy || anchor.col!=cx); }
 static void clearSel() { selecting=false; anchor={cy,cx}; }
+static int indentOf(int row);
+static void clampCursor();
 static const vector<string>& visibleOutput() { return errors.empty()?output:errors; }
 static Pos outputStartSel() { Pos a=outputAnchor,b=outputCursor; if(a.row>b.row||(a.row==b.row&&a.col>b.col)) swap(a,b); return a; }
 static Pos outputEndSel() { Pos a=outputAnchor,b=outputCursor; if(a.row>b.row||(a.row==b.row&&a.col>b.col)) swap(a,b); return b; }
